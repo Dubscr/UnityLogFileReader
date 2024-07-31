@@ -1,7 +1,7 @@
 import os
 # Current working directory
-cwd = os.getcwd().replace("\\", "/")
-logsFolder = cwd + "/unitylogs/"
+thisDir = __file__.replace("\\", "/").replace(os.path.basename(__file__), "")
+logsFolder = thisDir + "/unitylogs/"
 # Gets all consecutive alphanumeric substrings in string
 def GetAlnumSubsets(line):
     line = str(line)
@@ -31,6 +31,7 @@ def HasValidChangeset(line):
             return True
     return False
 
+# Returns list of valid Unity log files
 def GetValidLogFiles():
     # Get list of log files in logs folder
     listOfFiles = os.listdir(logsFolder)
@@ -46,6 +47,7 @@ def GetValidLogFiles():
 
 validatedUnityLogFiles = GetValidLogFiles()
 
+# Returns grouped sections of code
 def GroupList(file):
     with open(logsFolder + file) as f:
         # Check if file is valid Unity log file
@@ -60,6 +62,7 @@ def GroupList(file):
                 currentLine = ""
     return groupedLines
 
+# Returns frequency of each section from dict
 def GetFrequencyFromLogFile(logFile):
     definedSections = dict()
     for groupedLog in GroupList(logFile):
