@@ -1,7 +1,12 @@
 import os
+import re
 # Current working directory
 thisDir = __file__.replace("\\", "/").replace(os.path.basename(__file__), "")
 logsFolder = thisDir + "/unitylogs/"
+
+logSectionScriptAndFunctions = dict(script = "", function = "")
+projectAssetsFolder = "C:/Users/Owner/Desktop/Github/Default/Murder Mystery/Assets"
+projectScripts = dict(script = "", dir = "")
 # Gets all consecutive alphanumeric substrings in string
 def GetAlnumSubsets(line):
     line = str(line)
@@ -45,8 +50,6 @@ def GetValidLogFiles():
                     validLogFiles.append(file)
     return validLogFiles
 
-validatedUnityLogFiles = GetValidLogFiles()
-
 # Returns grouped sections of code
 def GroupList(file):
     with open(logsFolder + file) as f:
@@ -72,6 +75,63 @@ def GetFrequencyFromLogFile(logFile):
             definedSections[groupedLog] += 1
     return definedSections
 
-for string, freq in GetFrequencyFromLogFile(validatedUnityLogFiles[1]).items():
-    if(freq > 10):
-            print(string + "\n" + str(freq) + "\n")
+# Returns script and function from section
+def GetScriptAndFunctionFromSection(section):
+    section = str(section)
+    match = re.findall(r'at\s([^\s]+)\s\([^\)]*\)', section)
+    if match is not None:
+        return match
+    else:
+        return None
+
+# Returns list of scripts
+def GetScriptsFromDir(rootFolder):
+    cs_files = []
+    for root, dirs, files in os.walk(rootFolder):
+        for filename in files:
+            if str(filename).endswith('.cs'):
+                cs_files.append(os.path.join(root, filename).replace("\\", "/"))
+    return cs_files
+
+
+def GetScriptContents(file):
+    with open(file, encoding="utf8") as f:
+        contents = f.readlines()
+        if(contents != ""):
+            return contents
+def StageOne():
+    # Get list of valid Unity log files
+    validatedUnityLogFiles = GetValidLogFiles()
+
+    # Get frequency of each section (Sorts out sections with less than 10 occurrences)
+    for section, freq in GetFrequencyFromLogFile(validatedUnityLogFiles[0]).items():
+        if(freq > 10):
+            for scriptAndFunction in GetScriptAndFunctionFromSection(section):
+                splitFunction = str(scriptAndFunction).split(".")
+                scriptName = splitFunction[0]
+                functionName = splitFunction[1]
+                if(scriptName == "UnityEngine"):
+                    continue
+                logSectionScriptAndFunctions[scriptName] = functionName
+
+# Gets all project scripts and dirs
+def StageTwo():
+    for file in GetScriptsFromDir(projectAssetsFolder):
+        projectScripts[os.path.basename(file.replace(".cs", ""))] = file
+
+# Finds functions inside of scripts
+def StageThree():
+    # Loop through log file sections
+    for script, function in logSectionScriptAndFunctions.items():
+        for file, dir in projectScripts.items():
+            if(dir != ""):
+                if(script == file):
+                    for i, lines  in enumerate(GetScriptContents(dir)):
+                        if(lines != ""):
+                            if(function in lines):
+                                print(file + ": " + dir + "\n" + str(i))
+
+if __name__ == "__main__":
+    StageOne()
+    StageTwo()
+    StageThree()
