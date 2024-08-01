@@ -102,7 +102,6 @@ def GetScriptContents(file):
 def StageOne():
     # Get list of valid Unity log files
     validatedUnityLogFiles = GetValidLogFiles()
-
     # Get frequency of each section (Sorts out sections with less than 10 occurrences)
     for section, freq in GetFrequencyFromLogFile(validatedUnityLogFiles[0]).items():
         if(freq > 10):
@@ -129,7 +128,7 @@ def StageThree():
                     for i, lines  in enumerate(GetScriptContents(dir)):
                         if(lines != ""):
                             if(function in lines):
-                                print(file + ": " + dir + "\n" + str(i))
+                                print(file + ": " + dir + "\n" + str(i + 1))
 
 if __name__ == "__main__":
     StageOne()
