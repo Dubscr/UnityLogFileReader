@@ -1,6 +1,8 @@
 import os
 import re
 from enum import Enum
+import tkinter as tk
+from tkinter import ttk
 class DebugTypes(Enum):
     UNDEFINED = 0
     NULLREFERENCEEXCEPTION = 1
@@ -28,7 +30,7 @@ thisDir = __file__.replace("\\", "/").replace(os.path.basename(__file__), "")
 logsFolder = thisDir + "/unitylogs/"
 
 logSectionScriptAndData = dict(script = str(), selectionData = SectionData)
-projectAssetsFolder = "C:/Users/Owner/Desktop/Github/Default/Murder Mystery/Assets"
+projectAssetsFolder = "C:/Users/Owner/Desktop/Github/Default/Untitled-Ghost-Game/Assets"
 projectScripts = dict(script = str(), dir = str())
 
 errorsOnly = False
@@ -47,7 +49,7 @@ def GetAlnumSubsets(line):
                 currentSubset = ""
     return possibleSubsets
 
-# If specified subset is a valid changeset, return true
+# Individual check for valid changeset
 def IsValidChangeset(subset):
     if len(subset) == 12:
         return True
@@ -55,11 +57,14 @@ def IsValidChangeset(subset):
         return False
 
 # If first line of log file has a valid changeset, return true
-def HasValidChangeset(line):
-    subsets = GetAlnumSubsets(line)
-    for subset in subsets:
-        if IsValidChangeset(subset):
-            return True
+def HasValidChangeset(lines):
+    for line in lines:
+        subsets = GetAlnumSubsets(line)
+        joinedSubsets = "".join(str(x) for x in subsets)
+        if("Initializeengineversion" in joinedSubsets):
+            for subset in subsets:
+                if IsValidChangeset(subset):
+                    return True
     return False
 
 # Returns list of valid Unity log files
@@ -71,8 +76,8 @@ def GetValidLogFiles():
         if file.endswith(".log"):
             with open(logsFolder + file) as f:
                 # Check if file is valid Unity log file
-                firstLine = f.readline()
-                if HasValidChangeset(firstLine):
+                lines = f.readlines()
+                if HasValidChangeset(lines):
                     validLogFiles.append(file)
     return validLogFiles
 
@@ -90,6 +95,7 @@ def GroupList(file):
                 groupedLines.append(currentLine)
                 currentLine = ""
     return groupedLines
+    
 
 # Returns frequency of each section from dict
 def GetFrequencyFromLogFile(logFile):
@@ -201,6 +207,7 @@ def StageOne():
     for file in validatedUnityLogFiles:
         # Get frequency of each section (Sorts out sections with less than 10 occurrences)
         for section, freq in GetFrequencyFromLogFile(file).items():
+            print(section + "\n" + "\n")
             if(freq > 10):
                 Errors(section, file, freq)
                 NonErrors(section, file, freq)
@@ -236,7 +243,6 @@ def StageThree():
                                     print(GetColorFromLogType(data.logType) + "User debug message: " + data.debugMessage)
                                 print(GetColorFromLogType(data.logType) + file + ": " + dir + " " + str(i + 1) + "\n" + "Log type: " + str(data.logType) + "\n" + bcolors.ENDC)
                     print("Happened " + str(data.frequency) + " times.\n\n\n")
-
 if __name__ == "__main__":
     StageOne()
     StageTwo()
