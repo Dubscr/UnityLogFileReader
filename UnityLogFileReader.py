@@ -43,7 +43,7 @@ class DebugTypes(Enum):
     USERLOG = 36
 class SectionData(object):
     debugMessage = ""
-    scriptAndFunction = ""
+    functionName = ""
     frequency = 0
     logType = DebugTypes.UNDEFINED
 class bcolors:
@@ -141,7 +141,7 @@ def GetFrequencyFromLogFile(logFile):
 # Returns script and function from section
 def GetScriptAndFunctionFromSection(section):
     section = str(section)
-    match = re.findall(r'at\s([^\s]+)\s\([^\)]*\)', section)
+    match = re.findall(r'at\s([^\s]+)', section)
     if match is not None:
         return match
     else:
@@ -157,7 +157,7 @@ def GetDebugLogs(section):
             if(len(lines) > i + 1):
                 result2 = re.search(r'\b\w+:\w+\b(?=\(.*?\))', lines[i+1])
                 if(result2 is not None):
-                    data.scriptAndFunction = str(result2.group(0))
+                    data.functionName = str(result2.group(0))
                 return data
     return None
 
@@ -172,6 +172,7 @@ def GetScriptsFromDir(rootFolder):
 
 
 def GetScriptContents(file):
+    # Encoding is to avoid files that are not scripts that we want to read
     with open(file, encoding="utf8") as f:
         contents = f.readlines()
         if(contents != ""):
@@ -263,33 +264,40 @@ def NonErrors(section, logFile, freq):
     if(newData is None):
         return
     userLogSectionData.debugMessage = newData.debugMessage
-    userLogSectionData.scriptAndFunction = newData.scriptAndFunction
+    userLogSectionData.functionName = newData.functionName
     userLogSectionData.logType = GetSectionDebugType(section)
             
     # Null reference exceptions will have the script name and function listed.
     if(userLogSectionData.logType != DebugTypes.NULLREFERENCEEXCEPTION):
-        splitFunction = userLogSectionData.scriptAndFunction.split(":")
+        splitFunction = userLogSectionData.functionName.split(":")
         scriptName = splitFunction[0]
         functionName = splitFunction[1]
-        userLogSectionData.scriptAndFunction = functionName
+        userLogSectionData.functionName = functionName
         userLogSectionData.frequency = freq
         logSectionScriptFromLogAndData[scriptName + ":" + logFile] = userLogSectionData
 
 def Errors(section, logFile, freq):
-    for scriptAndFunction in GetScriptAndFunctionFromSection(section):
+    # Get most recent in callstack
+    for i, scriptAndFunction in enumerate(GetScriptAndFunctionFromSection(section)):
         splitFunction = str(scriptAndFunction).split(".")
-
         scriptName = splitFunction[0]
         functionName = splitFunction[1]
+
         for scriptToIgnore in scriptsToIgnore:
             if(scriptName == scriptToIgnore):
                 continue
-
+        
+        # Skip if this script has already been added, list goes from newest to oldest in callstack
+        if(logSectionScriptFromLogAndData.get(scriptName + ":" + logFile) is not None):
+            continue    
+        
         logSectionData = SectionData()
         logSectionData.frequency = freq
-        logSectionData.scriptAndFunction = functionName
+        logSectionData.functionName = functionName
         logSectionData.logType = GetSectionDebugType(section)
         logSectionScriptFromLogAndData[scriptName + ":" + logFile] = logSectionData
+
+
 def GetColorFromLogType(logType):
     if(logType == DebugTypes.USERERRORLOG):
         return bcolors.OKBLUE
@@ -344,7 +352,7 @@ def StageThree():
     # Loop through log file sections
     for scriptFromFile, data in sorted_dict.items():
         if(fileName != scriptFromFile.split(":")[1]):
-            print(f"{bcolors.HEADER}{bcolors.UNDERLINE}Reading File: { scriptFromFile.split(":")[1] }..." + bcolors.ENDC + "\n")
+            print(f"\n\n\n\n\n\n{bcolors.HEADER}{bcolors.UNDERLINE}Reading File: { scriptFromFile.split(":")[1] }..." + bcolors.ENDC + "\n")
             fileName = scriptFromFile.split(":")[1]
         for file, dir in projectScripts.items():
             if(dir != ""):
@@ -354,15 +362,16 @@ def StageThree():
                         print(bcolors.ENDC + GetColorFromLogType(data.logType) + "Debug message: " + data.debugMessage + bcolors.ENDC)
                     scriptContents = GetScriptContents(dir)
                     scriptContentsString = ListToString(scriptContents)
-                    print(bcolors.ENDC + GetColorFromLogType(data.logType) + "Happened at function: " + data.scriptAndFunction + bcolors.ENDC)
-                    if(data.scriptAndFunction in scriptContentsString):
+                    print(bcolors.ENDC + GetColorFromLogType(data.logType) + "Most recent callstack: " + data.functionName + bcolors.ENDC)
+                    if(data.functionName in scriptContentsString):
                         for i, lines  in enumerate(scriptContents):
                             if(lines != ""):
-                                if(data.scriptAndFunction in lines):
+                                if(data.functionName in lines):
                                     print(GetColorFromLogType(data.logType) + file + ": " + dir + " " + bcolors.ENDC + str(i + 1))
                     else:
                         print(bcolors.FAIL +"Could not find function in script from log. Usually because it is a coroutine." + bcolors.ENDC)
                     print("\n" + bcolors.ENDC + "Log type: " + str(data.logType) + "\n\n" + bcolors.ENDC + "Happened " + str(data.frequency) + " times.\n\n\n")
+
 if __name__ == "__main__":
     StageOne()
     StageTwo()
