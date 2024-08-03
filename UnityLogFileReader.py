@@ -352,12 +352,12 @@ def StageThree():
     # Loop through log file sections
     for scriptFromFile, data in sorted_dict.items():
         if(fileName != scriptFromFile.split(":")[1]):
-            print(f"{bcolors.HEADER}{bcolors.UNDERLINE}Reading File: { scriptFromFile.split(":")[1] }..." + bcolors.ENDC + "\n")
+            print(f"\n\n\n\n\n\n{bcolors.HEADER}{bcolors.UNDERLINE}Reading File: { scriptFromFile.split(":")[1] }..." + bcolors.ENDC + "\n")
             fileName = scriptFromFile.split(":")[1]
         for file, dir in projectScripts.items():
             if(dir != ""):
                 if(scriptFromFile.split(":")[0] == file):
-                    print(f"\n\n\n\n\n\n{bcolors.OKGREEN}Reading Script: {file}" + bcolors.ENDC + "\n") 
+                    print(f"{bcolors.OKGREEN}Reading Script: {file}" + bcolors.ENDC + "\n") 
                     if(data.debugMessage != ""):
                         print(bcolors.ENDC + GetColorFromLogType(data.logType) + "Debug message: " + data.debugMessage + bcolors.ENDC)
                     scriptContents = GetScriptContents(dir)
