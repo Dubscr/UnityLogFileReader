@@ -1,8 +1,6 @@
 import os
 import re
 from enum import Enum
-import tkinter as tk
-from tkinter import ttk
 class DebugTypes(Enum):
     UNDEFINED = 0,
     SYSTEMEXCEPTION = 1,
@@ -64,6 +62,7 @@ logSectionScriptFromLogAndData = dict()
 projectAssetsFolder = "C:\\Users\\Owner\\Desktop\\Github\\Default\\Murder Mystery\\Assets"
 projectScripts = dict(script = str(), dir = str())
 scriptsToIgnore = ["UnityEngine", "UnityEditor"]
+isMono = False
 errorsOnly = False
 
 # Gets all consecutive alphanumeric substrings in string
@@ -92,6 +91,9 @@ def HasValidChangeset(lines):
     for line in lines:
         subsets = GetAlnumSubsets(line)
         joinedSubsets = "".join(str(x) for x in subsets)
+        if("Monoconfigpath=" in joinedSubsets):
+            isMono = True
+            print("Mono time!!!")
         if("Initializeengineversion" in joinedSubsets):
             for subset in subsets:
                 if IsValidChangeset(subset):
@@ -153,7 +155,10 @@ def GetDebugLogs(section):
         if "Debug:Log" in line:
             data = SectionData()
             if(str(re.search(r'\S+\.\s*\S*\s*\(.*\)', section).group(0))):
-                data.debugMessage = lines[i - 2]
+                if(not isMono):
+                    data.debugMessage = lines[i - 2]
+                else:
+                    data.debugMessage = lines[i - 4]
             if(len(lines) > i + 1):
                 result2 = re.search(r'\b\w+:\w+\b(?=\(.*?\))', lines[i+1])
                 if(result2 is not None):
@@ -372,7 +377,10 @@ def StageThree():
                         print(bcolors.FAIL +"Could not find function in script from log. Usually because it is a coroutine." + bcolors.ENDC)
                     print("\n" + bcolors.ENDC + "Log type: " + str(data.logType) + "\n\n" + bcolors.ENDC + "Happened " + str(data.frequency) + " times.\n\n\n")
 
-if __name__ == "__main__":
+def Main():
     StageOne()
     StageTwo()
     StageThree()
+
+if __name__ == "__main__":
+    Main()
