@@ -59,9 +59,9 @@ thisDir = __file__.replace("\\", "/").replace(os.path.basename(__file__), "")
 logsFolder = thisDir + "/unitylogs/"
 
 logSectionScriptFromLogAndData = dict()
-projectAssetsFolder = "C:\\Users\\Owner\\Desktop\\Github\\Default\\Flop\\GoldfishSimulator\\Assets"
+projectAssetsFolder = "C:\\Users\\Owner\\Desktop\\Github\\Default\\Murder Mystery"
 projectScripts = dict(script = str(), dir = str())
-scriptsToIgnore = ["UnityEngine", "UnityEditor"]
+scriptsToIgnore = ["UnityEngine", "UnityEditor", "StackTraceUtility"]
 isMono = False
 errorsOnly = False
 
@@ -143,11 +143,11 @@ def GetFrequencyFromLogFile(logFile):
 # Returns script and function from section
 def GetScriptAndFunctionFromSection(section):
     section = str(section)
-    match = re.findall(r'at\s([^\s]+)', section)
+    match = re.findall(r'\w+:\w+\s*\(.*?\)', section)
     if match is not None:
         return match
     else:
-        return None
+        return []
 
 def GetDebugLogs(section):
     lines = section.splitlines()
@@ -256,17 +256,22 @@ def GetSectionDebugType(content=""):
         return DebugTypes.EDITORAPPLICATIONEXCEPTION
     elif "BuildFailedException" in content:
         return DebugTypes.BUILDFAILEDEXCEPTION
-    elif "Debug:LogError" in content:
+    elif "LogError" in content:
         return DebugTypes.USERERRORLOG
-    elif "Debug:LogWarning" in content:
+    elif "LogWarning" in content:
         return DebugTypes.USERWARNINGLOG
-    elif "Debug:Log" in content:
+    elif "Log" in content:
         return DebugTypes.USERLOG
     
     print(f"Could not find debug type at content:\n{content}")
     return DebugTypes.UNDEFINED
 
-
+def RemoveAfterParentheses(functionName):
+    result = ""
+    for char in functionName:
+        if(char == "("):
+            return result.replace(" ", "") 
+        result += char
 def NonErrors(section, logFile, freq):
     userLogSectionData = SectionData()
     newData = GetDebugLogs(section)
@@ -281,17 +286,18 @@ def NonErrors(section, logFile, freq):
         splitFunction = userLogSectionData.functionName.split(":")
         scriptName = splitFunction[0]
         functionName = splitFunction[1]
+        functionName = RemoveAfterParentheses(functionName)
         userLogSectionData.functionName = functionName
         userLogSectionData.frequency = freq
         logSectionScriptFromLogAndData[scriptName + ":" + logFile] = userLogSectionData
-
+# Replacement function to keep the function call and replace the content inside parentheses with empty parentheses
 def Errors(section, logFile, freq):
     # Get most recent in callstack
     for i, scriptAndFunction in enumerate(GetScriptAndFunctionFromSection(section)):
-        splitFunction = str(scriptAndFunction).split(".")
+        splitFunction = str(scriptAndFunction).split(":")
         scriptName = splitFunction[0]
         functionName = splitFunction[1]
-
+        functionName = RemoveAfterParentheses(functionName)
         for scriptToIgnore in scriptsToIgnore:
             if(scriptName == scriptToIgnore):
                 continue
@@ -373,13 +379,12 @@ def StageThree():
                     scriptContents = GetScriptContents(dir)
                     scriptContentsString = ListToString(scriptContents)
                     print(bcolors.ENDC + GetColorFromLogType(data.logType) + "Most recent callstack: " + data.functionName + bcolors.ENDC)
-                    if(data.functionName in scriptContentsString):
-                        for i, lines  in enumerate(scriptContents):
-                            if(lines != ""):
-                                if(data.functionName in lines):
+                    for i, lines  in enumerate(scriptContents):
+                        if(lines != ""):
+                            if(data.functionName in lines):
                                     print(GetColorFromLogType(data.logType) + file + ": " + dir + " " + bcolors.ENDC + str(i + 1))
-                    else:
-                        print(bcolors.FAIL +"Could not find function in script from log. Usually because it is a coroutine." + bcolors.ENDC)
+                        else:
+                            print(bcolors.FAIL +"Could not find function in script from log. Usually because it is a coroutine." + bcolors.ENDC)
                     print("\n" + bcolors.ENDC + "Log type: " + str(data.logType) + "\n\n" + bcolors.ENDC + "Happened " + str(data.frequency) + " times.\n\n\n")
 
 def Main():
