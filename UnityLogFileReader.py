@@ -281,9 +281,9 @@ def Errors(section, logFile, freq):
 
         scriptName = splitFunction[0]
         functionName = splitFunction[1]
-
-        if(scriptName == "UnityEngine"):
-            continue
+        for scriptToIgnore in scriptsToIgnore:
+            if(scriptName == scriptToIgnore):
+                continue
 
         logSectionData = SectionData()
         logSectionData.frequency = freq
@@ -291,14 +291,14 @@ def Errors(section, logFile, freq):
         logSectionData.logType = GetSectionDebugType(section)
         logSectionScriptFromLogAndData[scriptName + ":" + logFile] = logSectionData
 def GetColorFromLogType(logType):
-    if(logType == DebugTypes.NULLREFERENCEEXCEPTION):
-        return bcolors.FAIL
-    elif(logType == DebugTypes.USERERRORLOG):
+    if(logType == DebugTypes.USERERRORLOG):
         return bcolors.OKBLUE
     elif(logType == DebugTypes.USERWARNINGLOG):
         return bcolors.WARNING
     elif(logType == DebugTypes.USERLOG):
         return bcolors.OKCYAN
+    elif(logType is not None):
+        return bcolors.FAIL
     else:
         return bcolors.ENDC
 def sort_key(item):
@@ -359,10 +359,10 @@ def StageThree():
                         for i, lines  in enumerate(scriptContents):
                             if(lines != ""):
                                 if(data.scriptAndFunction in lines):
-                                    print(GetColorFromLogType(data.logType) + file + ": " + dir + " " + str(i + 1))
+                                    print(GetColorFromLogType(data.logType) + file + ": " + dir + " " + bcolors.ENDC + str(i + 1))
                     else:
                         print(bcolors.FAIL +"Could not find function in script from log. Usually because it is a coroutine." + bcolors.ENDC)
-                    print("\n" + "Log type: " + str(data.logType) + "\n\n" + bcolors.ENDC + "Happened " + str(data.frequency) + " times.\n\n\n")
+                    print("\n" + bcolors.ENDC + "Log type: " + str(data.logType) + "\n\n" + bcolors.ENDC + "Happened " + str(data.frequency) + " times.\n\n\n")
 if __name__ == "__main__":
     StageOne()
     StageTwo()
