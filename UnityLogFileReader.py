@@ -266,7 +266,7 @@ def GetSectionDebugType(content=""):
 def NonErrors(section, logFile, freq):
     userLogSectionData = SectionData()
     newData = GetDebugLogs(section)
-    if(newData is None):
+    if(newData is None or len(newData.functionName) < 1):
         return
     userLogSectionData.debugMessage = newData.debugMessage
     userLogSectionData.functionName = newData.functionName
