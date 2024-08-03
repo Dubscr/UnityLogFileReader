@@ -277,7 +277,7 @@ def NonErrors(section, logFile, freq):
         logSectionScriptFromLogAndData[scriptName + ":" + logFile] = userLogSectionData
 
 def Errors(section, logFile, freq):
-    # Get most recent callstack
+    # Get most recent in callstack
     for i, scriptAndFunction in enumerate(GetScriptAndFunctionFromSection(section)):
         splitFunction = str(scriptAndFunction).split(".")
         scriptName = splitFunction[0]
@@ -287,6 +287,7 @@ def Errors(section, logFile, freq):
             if(scriptName == scriptToIgnore):
                 continue
         
+        # Skip if this script has already been added, list goes from newest to oldest in callstack
         if(logSectionScriptFromLogAndData.get(scriptName + ":" + logFile) is not None):
             continue    
         
@@ -295,8 +296,6 @@ def Errors(section, logFile, freq):
         logSectionData.functionName = functionName
         logSectionData.logType = GetSectionDebugType(section)
         logSectionScriptFromLogAndData[scriptName + ":" + logFile] = logSectionData
-
-        print(scriptName + " " + functionName + " " + str(i))
 
 
 def GetColorFromLogType(logType):
@@ -358,12 +357,12 @@ def StageThree():
         for file, dir in projectScripts.items():
             if(dir != ""):
                 if(scriptFromFile.split(":")[0] == file):
-                    print(f"{bcolors.OKGREEN}Reading Script: {file}" + bcolors.ENDC + "\n") 
+                    print(f"\n\n\n\n\n\n{bcolors.OKGREEN}Reading Script: {file}" + bcolors.ENDC + "\n") 
                     if(data.debugMessage != ""):
                         print(bcolors.ENDC + GetColorFromLogType(data.logType) + "Debug message: " + data.debugMessage + bcolors.ENDC)
                     scriptContents = GetScriptContents(dir)
                     scriptContentsString = ListToString(scriptContents)
-                    print(bcolors.ENDC + GetColorFromLogType(data.logType) + "Happened at function: " + data.functionName + bcolors.ENDC)
+                    print(bcolors.ENDC + GetColorFromLogType(data.logType) + "Most recent callstack: " + data.functionName + bcolors.ENDC)
                     if(data.functionName in scriptContentsString):
                         for i, lines  in enumerate(scriptContents):
                             if(lines != ""):
