@@ -161,6 +161,7 @@ def GetDebugLogs(section):
                     data.debugMessage = lines[i - 4]
             if(len(lines) > i + 1):
                 result2 = re.search(r'\b\w+:\w+\b(?=\(.*?\))', lines[i+1])
+                print(result2.group(0))
                 if(result2 is not None):
                     data.functionName = str(result2.group(0))
                 return data
@@ -332,6 +333,7 @@ def StageOne():
     # Get list of valid Unity log files
     validatedUnityLogFiles = GetValidLogFiles()
     for file in validatedUnityLogFiles:
+        
         # Get frequency of each section (Sorts out sections with less than 10 occurrences)
         for section, freq in GetFrequencyFromLogFile(file).items():
             if(freq > 6):
