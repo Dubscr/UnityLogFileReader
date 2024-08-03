@@ -59,7 +59,7 @@ thisDir = __file__.replace("\\", "/").replace(os.path.basename(__file__), "")
 logsFolder = thisDir + "/unitylogs/"
 
 logSectionScriptFromLogAndData = dict()
-projectAssetsFolder = "C:\\Users\\Owner\\Desktop\\Github\\Default\\Murder Mystery\\Assets"
+projectAssetsFolder = "C:\\Users\\Owner\\Desktop\\Github\\Default\\Flop\\GoldfishSimulator\\Assets"
 projectScripts = dict(script = str(), dir = str())
 scriptsToIgnore = ["UnityEngine", "UnityEditor"]
 isMono = False
@@ -91,9 +91,9 @@ def HasValidChangeset(lines):
     for line in lines:
         subsets = GetAlnumSubsets(line)
         joinedSubsets = "".join(str(x) for x in subsets)
-        if("Monoconfigpath=" in joinedSubsets):
+        if("Monoconfigpath" in joinedSubsets):
+            global isMono
             isMono = True
-            print("Mono time!!!")
         if("Initializeengineversion" in joinedSubsets):
             for subset in subsets:
                 if IsValidChangeset(subset):
@@ -160,8 +160,11 @@ def GetDebugLogs(section):
                 else:
                     data.debugMessage = lines[i - 4]
             if(len(lines) > i + 1):
-                result2 = re.search(r'\b\w+:\w+\b(?=\(.*?\))', lines[i+1])
-                print(result2.group(0))
+                for ignoredScript in scriptsToIgnore:
+                    if(ignoredScript in line):
+                        continue
+                result2 = re.search(r'\b\w+:\w+\s*\(.*?\)', lines[i+1])
+                
                 if(result2 is not None):
                     data.functionName = str(result2.group(0))
                 return data
